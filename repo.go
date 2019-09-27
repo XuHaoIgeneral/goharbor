@@ -3,7 +3,7 @@ package harbor
 import (
 	"context"
 	"fmt"
-	"harbor-go/models"
+	"github.com/XuHaoIgeneral/goharbor/models"
 	"net/http"
 	"net/url"
 )

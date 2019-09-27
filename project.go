@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"harbor-go/models"
+	"github.com/XuHaoIgeneral/goharbor/models"
 	"net/http"
 	"net/url"
 	"strings"
