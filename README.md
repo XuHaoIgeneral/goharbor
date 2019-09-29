@@ -6,7 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/bingbaba/harbor-go"
+	"github.com/XuHaoIgeneral/goharbor"
 )
 
 const (
