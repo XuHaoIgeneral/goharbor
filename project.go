@@ -5,15 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/XuHaoIgeneral/goharbor/models"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 )
 
 const (
-	PATH_FMT_PROJECT_LIST       = "/api/projects"
-	PATH_FMT_PROJECT_GET        = "/api/projects/%d"
-	PATH_FMT_PROJECT_ADD_MEMBER = "/api/projects/%d/members"
+	PATH_FMT_PROJECT_LIST        = "/api/projects"
+	PATH_FMT_PROJECT_GET         = "/api/projects/%d"
+	PATH_FMT_PROJECT_ADD_MEMBER  = "/api/projects/%d/members"
+	PATH_FMT_PROJECT_DEL_MEMBER  = "/api/projects/%d/members/%d"
+	PATH_FMT_PROJECT_GET_MEMBERs = "/api/projects/%d/members/?entityname="
 )
 
 type ProjectOption struct {
@@ -69,7 +72,7 @@ func (c *Client) CreateProject(ctx context.Context, opt *ProjectInit) (bool, err
 	}
 	ret := &models.InitProject{
 		ProjectName: opt.ProjectName,
-		Metadata: models.ProjectMetadata{
+		Metadata: models.InitProjectMetadata{
 			Public: metadata,
 		},
 	}
@@ -92,19 +95,15 @@ func (c *Client) CreateProject(ctx context.Context, opt *ProjectInit) (bool, err
 	}
 	defer body.Close()
 
+	body_byte, err := ioutil.ReadAll(body)
+
+	body_str := string(body_byte)
+
 	switch code {
 	case 200, 201:
 		return true, nil
-	case 400:
-		return false, ERROR_THE_FORMAT
-	case 401:
-		return false, ERROR_THE_401
-	case 415:
-		return false, ERROR_THE_TYPE
-	case 500:
-		return false, ERROR_THE_SERVER
 	default:
-		return false, ERROR_THE_PKG
+		return false, fmt.Errorf("error info : %s", body_str)
 	}
 }
 
@@ -173,19 +172,15 @@ func (c *Client) DeleteProjectById(ctx context.Context, id int64) (deleted bool,
 	}
 	defer body.Close()
 
+	body_byte, err := ioutil.ReadAll(body)
+
+	body_str := string(body_byte)
+
 	switch code {
-	case 200:
+	case 200, 201:
 		return true, nil
-	case 400, 404:
-		return false, NotFoundError
-	case 403:
-		return true, UserNotLoginError
-	case 412:
-		return false, NotAllowError
-	case 500:
-		return false, CallApiError
 	default:
-		return true, ServerInternalError
+		return false, fmt.Errorf("error info : %s", body_str)
 	}
 }
 
@@ -198,49 +193,34 @@ func (c *Client) DeleteProjectByName(ctx context.Context, project string) (delet
 	return c.DeleteProjectById(ctx, projectId)
 }
 
-func (c *Client) ProjectIsExist(ctx context.Context, name string) (bool, error) {
-	//projects, err := c.ListProjects(ctx, &ProjectOption{Name: name})
-	//if err != nil {
-	//	return false, err
-	//}
-	//if len(projects) > 0 {
-	//	return true, nil
-	//} else {
-	//	return false, nil
-	//}
-
-	path := fmt.Sprintf("%s?project_name=%s", PATH_FMT_PROJECT_LIST, name)
-	//log.Print(path)
-	req, err := http.NewRequest(http.MethodHead, c.host+path, nil)
-	if err != nil {
-		return false, err
-	}
-
-	code, body, err := c.do(ctx, req)
-	if err != nil {
-		return false, err
-	}
-	defer body.Close()
-
-	switch code {
-	case 200:
-		return true, nil
-	case 401:
-		return true, UserNotLoginError
-	case 404:
-		return false, nil
-	case 500:
-		return true, CallApiError
-	default:
-		return true, ServerInternalError
-	}
-}
+//// todo rewrite
+//func (c *Client) ProjectIsExist(ctx context.Context, name string) (bool, error) {
+//	path := fmt.Sprintf("%s?project_name=%s", PATH_FMT_PROJECT_LIST, name)
+//	req, err := http.NewRequest(http.MethodHead, c.host+path, nil)
+//	if err != nil {
+//		return false, err
+//	}
+//
+//	code, body, err := c.do(ctx, req)
+//	if err != nil {
+//		return false, err
+//	}
+//	defer body.Close()
+//
+//	body_byte, err := ioutil.ReadAll(body)
+//
+//	body_str := string(body_byte)
+//
+//	switch code {
+//	case 200, 201:
+//		return true, nil
+//	default:
+//		return false, fmt.Errorf("error info : %s", body_str)
+//	}
+//}
 
 func (c *Client) AddMemberToProject(ctx context.Context, pm *ProjectMember) (bool, error) {
 	// 检查project是否存在
-
-	// 查询users是否存在。
-
 	projects, err := c.GetProjectByName(ctx, pm.Project)
 	if err != nil {
 		return false, err
@@ -262,13 +242,11 @@ func (c *Client) AddMemberToProject(ctx context.Context, pm *ProjectMember) (boo
 			Username: pm.Username,
 		},
 	}
-
 	// struct to string
 	out, err := json.Marshal(ret)
 	if err != nil {
 		return false, err
 	}
-
 	str_out := string(out)
 	req_body := strings.NewReader(str_out)
 	path := fmt.Sprintf(PATH_FMT_PROJECT_ADD_MEMBER, projects.ProjectID)
@@ -281,23 +259,93 @@ func (c *Client) AddMemberToProject(ctx context.Context, pm *ProjectMember) (boo
 		return false, err
 	}
 	defer body.Close()
-	
+
+	body_byte, err := ioutil.ReadAll(body)
+
+	body_str := string(body_byte)
+
 	switch code {
 	case 200, 201:
 		return true, nil
-	case 400:
-		return false, ERROR_THE_FORMAT
-	case 401:
-		return false, UserNotLoginError
-	case 403:
-		return false, ERROR_THE_PERMISSIONS
-	case 415:
-		return false, ERROR_THE_TYPE
-	case 500:
-		return false, ERROR_THE_SERVER
-	case 409:
-		return false, ERROR_THE_409
 	default:
-		return false, ERROR_THE_PKG
+		return false, fmt.Errorf("error info : %s", body_str)
 	}
+}
+
+func (c *Client) GetProjectMetadataList(ctx context.Context, project string) ([]*models.ProjectMember, error) {
+	var ret []*models.ProjectMember
+	projects, err := c.GetProjectByName(ctx, project)
+	if err != nil {
+		return ret, err
+	}
+	projectId := projects.ProjectID
+	path := fmt.Sprintf(PATH_FMT_PROJECT_GET_MEMBERs, projectId)
+	req, err := http.NewRequest(http.MethodGet, c.host+path, nil)
+	if err != nil {
+		return ret, err
+	}
+	err = c.doJson(ctx, req, &ret)
+	if err != nil {
+		return ret, err
+	}
+	return ret, nil
+}
+
+func (c *Client) GetProjectMetadataByUser(ctx context.Context, username, project string) ([]*models.ProjectMember, error) {
+	var ret []*models.ProjectMember
+	projects, err := c.GetProjectByName(ctx, project)
+	if err != nil {
+		return ret, err
+	}
+	projectId := projects.ProjectID
+	path := fmt.Sprintf(PATH_FMT_PROJECT_GET_MEMBERs+"%s", projectId, username)
+	req, err := http.NewRequest(http.MethodGet, c.host+path, nil)
+	if err != nil {
+		return ret, err
+	}
+	err = c.doJson(ctx, req, &ret)
+	if err != nil {
+		return ret, err
+	}
+
+	if len(ret) == 0 {
+		return ret, NotFoundError
+	}
+	return ret, nil
+}
+
+func (c *Client) DelMemberToProject(ctx context.Context, username, project string) (bool, error) {
+	projects, err := c.GetProjectByName(ctx, project)
+	if err != nil {
+		return false, err
+	}
+	users, err := c.GetProjectMetadataByUser(ctx, username, project)
+	if err != nil {
+		return false, err
+	}
+	user := users[0]
+
+	path := fmt.Sprintf(PATH_FMT_PROJECT_DEL_MEMBER, projects.ProjectID, user.Id)
+
+	req, err := http.NewRequest(http.MethodDelete, c.host+path, nil)
+	if err != nil {
+		return false, err
+	}
+	code, body, err := c.do(ctx, req)
+	if err != nil {
+		return false, err
+	}
+
+	defer body.Close()
+	body_byte, err := ioutil.ReadAll(body)
+
+	body_str := string(body_byte)
+
+	switch code {
+	case 200, 201:
+		return true, nil
+	default:
+		return false, fmt.Errorf("error info : %s", body_str)
+	}
+
 }

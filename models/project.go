@@ -20,12 +20,25 @@ type Project struct {
 }
 
 type InitProject struct {
-	ProjectName string          `json:"project_name"`
-	Metadata    ProjectMetadata `json:"metadata"`
+	ProjectName string              `json:"project_name"`
+	Metadata    InitProjectMetadata `json:"metadata"`
 }
 
-type ProjectMetadata struct {
+type InitProjectMetadata struct {
 	Public string `json:"public"`
+}
+
+type ProjectMembers struct {
+	ProjectMemberEntity []ProjectMember
+}
+type ProjectMember struct {
+	Id         int    `json:"id"`
+	ProjectId  int    `json:"project_id"`
+	EntityName string `json:"entity_name"`
+	RoleName   string `json:"role_name"`
+	RoleId     int    `json:"role_id"`
+	EntityId   int    `json:"entity_id"`
+	EntityType string `json:"entity_type"`
 }
 
 func (p *Project) IsDeleted() bool {

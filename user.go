@@ -126,19 +126,15 @@ func (c *Client) CreateUser(ctx context.Context, opt *UserInit) (bool, error) {
 	}
 	defer body.Close()
 
+	body_byte, err := ioutil.ReadAll(body)
+
+	body_str := string(body_byte)
+
 	switch code {
 	case 200, 201:
 		return true, nil
-	case 400:
-		return false, ERROR_THE_FORMAT
-	case 403:
-		return false, ERROR_THE_PERMISSIONS
-	case 415:
-		return false, ERROR_THE_TYPE
-	case 500:
-		return false, ERROR_THE_SERVER
 	default:
-		return false, ERROR_THE_PKG
+		return false, fmt.Errorf("error info : %s", body_str)
 	}
 }
 
@@ -170,22 +166,15 @@ func (c *Client) UpdateUserPwd(ctx context.Context, username string, upwd *UserU
 	}
 	defer body.Close()
 
+	body_byte, err := ioutil.ReadAll(body)
+
+	body_str := string(body_byte)
+
 	switch code {
 	case 200, 201:
 		return true, nil
-	case 400:
-		return false, fmt.Errorf("Invalid user ID; Old password is blank; New password is blank.")
-	case 401:
-		return false, fmt.Errorf("Don't have authority to change password. Please check login status.")
-	case 403:
-		return false, fmt.Errorf("The caller does not have permission to update the password of the user with" +
-			" given ID, or the old password in request body is not correct.")
-	case 415:
-		return false, ERROR_THE_TYPE
-	case 500:
-		return false, ERROR_THE_SERVER
 	default:
-		return false, ERROR_THE_PKG
+		return false, fmt.Errorf("error info : %s", body_str)
 	}
 }
 
@@ -210,17 +199,15 @@ func (c *Client) DeleteUser(ctx context.Context, username string) (deleted bool,
 
 	defer body.Close()
 
-	fmt.Println(code)
-
 	body_byte, err := ioutil.ReadAll(body)
 
 	body_str := string(body_byte)
-	fmt.Println(body_str)
+
 	switch code {
 	case 200, 201:
 		return true, nil
 	default:
-		return false, err
+		return false, fmt.Errorf("error info : %s", body_str)
 	}
 }
 
