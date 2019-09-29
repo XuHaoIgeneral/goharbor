@@ -1,4 +1,4 @@
-# harbor-go
+# goharbor
 
 ```golang
 package main

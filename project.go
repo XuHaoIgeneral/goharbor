@@ -130,7 +130,7 @@ func (c *Client) ListProjects(ctx context.Context, opt *ProjectOption) ([]*model
 	return ret, nil
 }
 
-func (c *Client) GetProject(ctx context.Context, id int64) (*models.Project, error) {
+func (c *Client) GetProjectById(ctx context.Context, id int64) (*models.Project, error) {
 	ret := new(models.Project)
 
 	path := fmt.Sprintf(PATH_FMT_PROJECT_GET, id)
@@ -147,7 +147,19 @@ func (c *Client) GetProject(ctx context.Context, id int64) (*models.Project, err
 	return ret, nil
 }
 
-func (c *Client) DeleteProject(ctx context.Context, id int64) (deleted bool, err error) {
+func (c *Client) GetProjectByName(ctx context.Context, name string) (*models.Project, error) {
+	projects, err := c.ListProjects(ctx, &ProjectOption{Name: name})
+	if err != nil {
+		return nil, err
+	}
+	if len(projects) == 0 {
+		return nil, NotFoundError
+	}
+
+	return projects[0], nil
+}
+
+func (c *Client) DeleteProjectById(ctx context.Context, id int64) (deleted bool, err error) {
 
 	path := fmt.Sprintf(PATH_FMT_PROJECT_GET, id)
 	req, err := http.NewRequest(http.MethodDelete, c.host+path, nil)
@@ -175,6 +187,15 @@ func (c *Client) DeleteProject(ctx context.Context, id int64) (deleted bool, err
 	default:
 		return true, ServerInternalError
 	}
+}
+
+func (c *Client) DeleteProjectByName(ctx context.Context, project string) (deleted bool, err error) {
+	projectModel, err := c.GetProjectByName(ctx, project)
+	if err != nil {
+		return false, err
+	}
+	projectId := projectModel.ProjectID
+	return c.DeleteProjectById(ctx, projectId)
 }
 
 func (c *Client) ProjectIsExist(ctx context.Context, name string) (bool, error) {
@@ -213,18 +234,6 @@ func (c *Client) ProjectIsExist(ctx context.Context, name string) (bool, error) 
 	default:
 		return true, ServerInternalError
 	}
-}
-
-func (c *Client) GetProjectByName(ctx context.Context, name string) (*models.Project, error) {
-	projects, err := c.ListProjects(ctx, &ProjectOption{Name: name})
-	if err != nil {
-		return nil, err
-	}
-	if len(projects) == 0 {
-		return nil, NotFoundError
-	}
-
-	return projects[0], nil
 }
 
 func (c *Client) AddMemberToProject(ctx context.Context, pm *ProjectMember) (bool, error) {
@@ -272,7 +281,7 @@ func (c *Client) AddMemberToProject(ctx context.Context, pm *ProjectMember) (boo
 		return false, err
 	}
 	defer body.Close()
-
+	
 	switch code {
 	case 200, 201:
 		return true, nil
