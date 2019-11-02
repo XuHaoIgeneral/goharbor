@@ -76,7 +76,7 @@ func (c *Client) UserIsExist(ctx context.Context, username string) (bool, error)
 	if err != nil {
 		return false, err
 	}
-	if len(list_user) < 1 {
+	if len(list_user) != 1 {
 		return false, fmt.Errorf("username=%s is not find", username)
 	}
 	return true, nil

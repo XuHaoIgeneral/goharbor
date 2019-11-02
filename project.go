@@ -151,7 +151,7 @@ func (c *Client) GetProjectByName(ctx context.Context, name string) (*models.Pro
 	if err != nil {
 		return nil, err
 	}
-	if len(projects) == 0 {
+	if len(projects) == 0 && len(projects) != 1 {
 		return nil, NotFoundError
 	}
 
