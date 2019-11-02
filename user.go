@@ -69,14 +69,8 @@ func (c *Client) ListUser(ctx context.Context, opt *UserOption) ([]*models.Users
 }
 
 func (c *Client) UserIsExist(ctx context.Context, username string) (bool, error) {
-	opt := &UserOption{
-		Username: username,
-	}
-	list_user, err := c.ListUser(ctx, opt)
+	_, err := c.GetUserByName(ctx, username)
 	if err != nil {
-		return false, err
-	}
-	if len(list_user) != 1 {
 		return false, fmt.Errorf("username=%s is not find", username)
 	}
 	return true, nil
@@ -87,9 +81,10 @@ func (c *Client) GetUserByName(ctx context.Context, username string) (*models.Us
 	if err != nil {
 		return nil, err
 	}
-	if len(users) == 0 {
+	if len(users) == 0 || len(users) != 1 || users[0].Username != username {
 		return nil, NotFoundError
 	}
+
 	return users[0], nil
 }
 

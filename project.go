@@ -151,10 +151,10 @@ func (c *Client) GetProjectByName(ctx context.Context, name string) (*models.Pro
 	if err != nil {
 		return nil, err
 	}
-	if len(projects) == 0 && len(projects) != 1 {
+	if len(projects) == 0 || len(projects) != 1 || projects[0].Name != name{
 		return nil, NotFoundError
 	}
-
+	
 	return projects[0], nil
 }
 
@@ -192,32 +192,6 @@ func (c *Client) DeleteProjectByName(ctx context.Context, project string) (delet
 	projectId := projectModel.ProjectID
 	return c.DeleteProjectById(ctx, projectId)
 }
-
-//// todo rewrite
-//func (c *Client) ProjectIsExist(ctx context.Context, name string) (bool, error) {
-//	path := fmt.Sprintf("%s?project_name=%s", PATH_FMT_PROJECT_LIST, name)
-//	req, err := http.NewRequest(http.MethodHead, c.host+path, nil)
-//	if err != nil {
-//		return false, err
-//	}
-//
-//	code, body, err := c.do(ctx, req)
-//	if err != nil {
-//		return false, err
-//	}
-//	defer body.Close()
-//
-//	body_byte, err := ioutil.ReadAll(body)
-//
-//	body_str := string(body_byte)
-//
-//	switch code {
-//	case 200, 201:
-//		return true, nil
-//	default:
-//		return false, fmt.Errorf("error info : %s", body_str)
-//	}
-//}
 
 func (c *Client) AddMemberToProject(ctx context.Context, pm *ProjectMember) (bool, error) {
 	// 检查project是否存在
@@ -301,16 +275,16 @@ func (c *Client) GetProjectMetadataByUser(ctx context.Context, username, project
 	path := fmt.Sprintf(PATH_FMT_PROJECT_GET_MEMBERs+"%s", projectId, username)
 	req, err := http.NewRequest(http.MethodGet, c.host+path, nil)
 	if err != nil {
-		return ret, err
+		return nil, err
 	}
 	err = c.doJson(ctx, req, &ret)
 	if err != nil {
-		return ret, err
+		return nil, err
+	}
+	if len(ret) != 1 || ret[0].EntityName != username {
+		return nil, NotFoundError
 	}
 
-	if len(ret) == 0 {
-		return ret, NotFoundError
-	}
 	return ret, nil
 }
 
