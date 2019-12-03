@@ -18,9 +18,14 @@ type Users struct {
 }
 
 type InitUser struct {
-	Username     string `json:"username"`
-	Email        string `json:"email"`
-	Password     string `json:"password"`
-	Realname     string `json:"realname"`
-	Comment      string `json:"comment"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Realname string `json:"realname"`
+	Comment  string `json:"comment"`
+}
+
+type SearchUser struct {
+	Username string `json:"username"`
+	UserId   int `json:"user_id"`
 }

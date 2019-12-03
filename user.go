@@ -4,17 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/XuHaoIgeneral/goharbor/models"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/XuHaoIgeneral/goharbor/models"
 )
 
 const (
 	PATH_FMT_USER_CREATE   = "/api/users"
 	PATH_FMT_USER_LIST     = "/api/users"
-	PATH_FMT_USER_SEARCH   = "/api/users/search"
+	PATH_FMT_USER_SEARCH   = "/api/users/search?username=%s"
 	PATH_FMT_USER_PASSWORD = "/api/users/%d/password"
 	PATH_FMT_USER_DELETE   = "/api/users/%d"
 )
@@ -49,6 +50,20 @@ func (opt *UserOption) Urls() url.Values {
 	return v
 }
 
+func (c *Client) SearchUser(ctx context.Context, username string) ([]*models.SearchUser, error) {
+	var ret []*models.SearchUser
+	path := fmt.Sprintf(PATH_FMT_USER_SEARCH, username)
+	req, err := http.NewRequest(http.MethodGet, c.host+path, nil)
+	if err != nil {
+		return ret, err
+	}
+	err = c.doJson(ctx, req, &ret)
+	if err != nil {
+		return ret, err
+	}
+	return ret, nil
+}
+
 func (c *Client) ListUser(ctx context.Context, opt *UserOption) ([]*models.Users, error) {
 	var ret []*models.Users
 	path := PATH_FMT_USER_LIST
@@ -76,16 +91,35 @@ func (c *Client) UserIsExist(ctx context.Context, username string) (bool, error)
 	return true, nil
 }
 
-func (c *Client) GetUserByName(ctx context.Context, username string) (*models.Users, error) {
-	users, err := c.ListUser(ctx, &UserOption{Username: username})
+func (c *Client) GetUserByName(ctx context.Context, username string) (*models.SearchUser, error) {
+	users, err := c.SearchUser(ctx, username)
 	if err != nil {
 		return nil, err
 	}
-	if len(users) == 0 || len(users) != 1 || users[0].Username != username {
+	// 加入全匹配规则
+	user := new(models.SearchUser)
+	switch len(users) {
+	case 0:
 		return nil, NotFoundError
+	case 1:
+		if users[0].Username != username {
+			return nil, NotFoundError
+		}
+		user = users[0]
+	default:
+		isUser := false
+		for _, u := range users {
+			if u.Username == username {
+				user = u
+				isUser = true
+				break
+			}
+		}
+		if !isUser {
+			return nil, NotFoundError
+		}
 	}
-
-	return users[0], nil
+	return user, nil
 }
 
 func (c *Client) CreateUser(ctx context.Context, opt *UserInit) (bool, error) {

@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/XuHaoIgeneral/goharbor/models"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/XuHaoIgeneral/goharbor/models"
 )
 
 const (
@@ -146,16 +147,35 @@ func (c *Client) GetProjectById(ctx context.Context, id int64) (*models.Project,
 	return ret, nil
 }
 
-func (c *Client) GetProjectByName(ctx context.Context, name string) (*models.Project, error) {
-	projects, err := c.ListProjects(ctx, &ProjectOption{Name: name})
+
+func (c *Client) GetProjectByName(ctx context.Context, projectName string) (*models.Project, error) {
+	projects, err := c.ListProjects(ctx, &ProjectOption{Name: projectName})
 	if err != nil {
 		return nil, err
 	}
-	if len(projects) == 0 || len(projects) != 1 || projects[0].Name != name{
+	project := new(models.Project)
+	switch len(projects) {
+	case 0:
 		return nil, NotFoundError
+	case 1:
+		if projects[0].Name != projectName {
+			return nil, NotFoundError
+		}
+		project = projects[0]
+	default:
+		isProject := false
+		for _, p := range projects {
+			if p.Name == projectName {
+				project = p
+				isProject = true
+				break
+			}
+		}
+		if !isProject {
+			return nil, NotFoundError
+		}
 	}
-	
-	return projects[0], nil
+	return project, nil
 }
 
 func (c *Client) DeleteProjectById(ctx context.Context, id int64) (deleted bool, err error) {

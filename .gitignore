@@ -1,3 +1,4 @@
 .idea/
 ./cmd/example.go
 cmd/example.go
+cmd/ca.crt
