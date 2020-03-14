@@ -116,7 +116,7 @@ func (c *Client) ListProjects(ctx context.Context, opt *ProjectOption) ([]*model
 		path += "?" + opt.Urls().Encode()
 	}
 
-	//log.Print(path)
+	// log.Print(path)
 	req, err := http.NewRequest(http.MethodGet, c.host+path, nil)
 	if err != nil {
 		return ret, err
@@ -146,7 +146,6 @@ func (c *Client) GetProjectById(ctx context.Context, id int64) (*models.Project,
 
 	return ret, nil
 }
-
 
 func (c *Client) GetProjectByName(ctx context.Context, projectName string) (*models.Project, error) {
 	projects, err := c.ListProjects(ctx, &ProjectOption{Name: projectName})
