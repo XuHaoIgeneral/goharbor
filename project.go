@@ -296,15 +296,28 @@ func (c *Client) GetProjectMetadataByUser(ctx context.Context, username, project
 	if err != nil {
 		return nil, err
 	}
+
 	err = c.doJson(ctx, req, &ret)
 	if err != nil {
 		return nil, err
 	}
-	if len(ret) != 1 || ret[0].EntityName != username {
+
+	retData := make([]*models.ProjectMember, 0)
+	// filler
+	if len(ret) != 1 {
+		for _, v := range ret {
+			if v.EntityName != username {
+				continue
+			}
+			retData = append(retData, v)
+			break
+		}
+	}
+	if len(retData) != 1 || retData[0].EntityName != username {
 		return nil, NotFoundError
 	}
 
-	return ret, nil
+	return retData, nil
 }
 
 func (c *Client) DelMemberToProject(ctx context.Context, username, project string) (bool, error) {

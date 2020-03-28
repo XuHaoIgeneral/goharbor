@@ -3,9 +3,10 @@ package harbor
 import (
 	"context"
 	"fmt"
-	"github.com/XuHaoIgeneral/goharbor/models"
 	"net/http"
 	"net/url"
+
+	"github.com/XuHaoIgeneral/goharbor/models"
 )
 
 const (

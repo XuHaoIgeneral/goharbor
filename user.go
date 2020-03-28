@@ -70,7 +70,6 @@ func (c *Client) ListUser(ctx context.Context, opt *UserOption) ([]*models.Users
 	if opt != nil {
 		path += "?" + opt.Urls().Encode()
 	}
-	//log.Print(path)
 	req, err := http.NewRequest(http.MethodGet, c.host+path, nil)
 	if err != nil {
 		return ret, err
@@ -144,7 +143,6 @@ func (c *Client) CreateUser(ctx context.Context, opt *UserInit) (bool, error) {
 
 	str_out := string(out)
 	req_body := strings.NewReader(str_out)
-	//log.Print(path)
 	req, err := http.NewRequest(http.MethodPost, c.host+path, req_body)
 	if err != nil {
 		return false, err
@@ -184,7 +182,6 @@ func (c *Client) UpdateUserPwd(ctx context.Context, username string, upwd *UserU
 	out, err := json.Marshal(upwd)
 	str_out := string(out)
 	req_body := strings.NewReader(str_out)
-	//log.Print(path)
 	req, err := http.NewRequest(http.MethodPut, c.host+path, req_body)
 	if err != nil {
 		return false, err
