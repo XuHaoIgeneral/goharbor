@@ -312,6 +312,8 @@ func (c *Client) GetProjectMetadataByUser(ctx context.Context, username, project
 			retData = append(retData, v)
 			break
 		}
+	} else {
+		retData = ret
 	}
 	if len(retData) != 1 || retData[0].EntityName != username {
 		return nil, NotFoundError
